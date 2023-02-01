@@ -1,0 +1,55 @@
+module Chore where
+
+--import Daml.Script
+
+type ChoreProposalId = ContractId Choreproposal
+type ChoreContractId = ContractId ChoreContract
+-- Proposal
+template Choreproposal
+    with
+        child : Party
+        parent: Party
+        chore : Text
+        note : Text
+    where
+        signatory child
+
+        choice Propose : ChoreProposalId
+            controller child
+            do
+                create this
+
+        choice Revise : ChoreProposalId
+            with
+                revision : Text
+                feedbackText : Text
+            controller child
+            do
+                create this with
+                    chore = revision
+                    note = feedbackText
+
+        choice Reject :  ChoreProposalId
+            with
+                feedback : Text
+            controller parent
+            do
+                create this with
+                    note = feedback
+
+        choice Accept : ChoreContractId
+            controller parent
+            do
+                create ChoreContract with
+                    parentInContract = parent
+                    childInContract = child
+                    choreName= chore
+
+template ChoreContract
+    with
+        parentInContract : Party
+        childInContract : Party
+        choreName: Text
+    where
+
+        signatory parentInContract, childInContract

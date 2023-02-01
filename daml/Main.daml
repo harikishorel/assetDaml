@@ -2,54 +2,51 @@ module Main where
 
 --import Daml.Script
 
-type ChoreProposalId = ContractId Choreproposal
-type ChoreContractId = ContractId ChoreContract
--- Proposal
-template Choreproposal
+type CreateId = ContractId Create
+type ViewId = ContractId View
+
+template Create
+  with
+    manufacturer : Party
+    retailer : Party 
+    product : Text
+    productId : Text
+    warrantyPeriod : Int
+  where
+    signatory manufacturer
+
+    choice Initiate : CreateId 
+        with 
+            name : Text
+            number : Text
+            limit : Int
+        controller manufacturer
+        do
+            create this with 
+                product = name 
+                productId = number 
+                warrantyPeriod = limit 
+
+
+    choice Transfer : ViewId
+        with 
+            customer : Party
+            purchaseDate : Int
+        controller retailer
+        do
+            create View with
+                retailerInContract = retailer
+                customerInContract = customer
+                buyDate = purchaseDate
+                -- observer [retailer, customer]
+
+
+template View
     with
-        child : Party
-        parent: Party
-        chore : Text
-        note : Text
-    where
-        signatory child
-
-        choice Propose : ChoreProposalId
-            controller child
-            do
-                create this
-
-        choice Revise : ChoreProposalId
-            with
-                revision : Text
-                feedbackText : Text
-            controller child
-            do
-                create this with
-                    chore = revision
-                    note = feedbackText
-
-        choice Reject :  ChoreProposalId
-            with
-                feedback : Text
-            controller parent
-            do
-                create this with
-                    note = feedback
-
-        choice Accept : ChoreContractId
-            controller parent
-            do
-                create ChoreContract with
-                    parentInContract = parent
-                    childInContract = child
-                    choreName= chore
-
-template ChoreContract
-    with
-        parentInContract : Party
-        childInContract : Party
-        choreName: Text
-    where
-
-        signatory parentInContract, childInContract
+        retailerInContract : Party
+        customerInContract : Party
+        buyDate : Int
+    
+    where 
+        signatory retailerInContract
+        observer customerInContract
