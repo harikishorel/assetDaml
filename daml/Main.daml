@@ -12,74 +12,85 @@ template Create
     product : Text
     productId : Text
     warrantyPeriod : Text
+    customer : Text
+    purchaseDate : Text
   where
     signatory manufacturer
-    
-    --manufacturer creating warrenty
-    choice Initiate : CreateId 
-        with 
-            name : Text
-            number : Text
-            limit : Text
-        controller manufacturer
-        do
-            create this with 
-                product = name 
-                productId = number 
-                warrantyPeriod = limit 
+    observer retailer
 
-    --retailer assigning warrenty to the customer
-    choice Transfer : ViewId
-        with 
-            customer : Party
-            purchaseDate : Text
+    -- choice ReleaseItemTo : CreateId
+    --     with
+    --         dealer : Party
+    --     controller manufacturer
+    --     do 
+    --         create this with
+    --             retailer = dealer
+        
+
+    choice SellItemTo : CreateId
+        with
+            rightFulOwner : Text
+            dateOfPurchase : Text
         controller retailer
-        do
+        do 
+            create this with
+                customer = rightFulOwner
+                purchaseDate = dateOfPurchase
+        
+
+    choice Transfer : ViewId
+        controller retailer
+        do 
             create View with
-                retailerInContract = retailer
-                customerInContract = customer
+                manufacturerName = manufacturer
+                retailerName = retailer
+                customerName = customer
                 buyDate = purchaseDate
-                --observer [retailer, customer]
 
 
 template View
     with
-        retailerInContract : Party
-        customerInContract : Party
+        manufacturerName : Party
+        retailerName : Party
+        customerName : Text
         buyDate : Text
     
     where 
-        signatory retailerInContract
-        observer customerInContract
+        signatory retailerName, manufacturerName
 
 
--- setup : Script ViewId
--- setup = script do
---     --assign Parties
---     adani <- allocatePartyWithHint "Adani" (PartyIdHint "Adani")
---     airtel <- allocatePartyWithHint "Airtel" (PartyIdHint "Airtel")
---     hk <- allocatePartyWithHint "HK" (PartyIdHint "HK")
---     adaniId <- validateUserId "adani"
---     airtelId <- validateUserId "airtel"
---     hkId <- validateUserId "hk"
---     createUser (User adaniId (Some adani)) [CanActAs adani]
---     createUser (User airtelId (Some airtel)) [CanActAs airtel]
---     createUser (User hkId (Some hk)) [CanActAs hk]
+setup : Script ViewId
+setup = script do
+    --assign Parties
+    adani <- allocatePartyWithHint "Adani" (PartyIdHint "Adani")
+    airtel <- allocatePartyWithHint "Airtel" (PartyIdHint "Airtel")
+    --hk <- allocatePartyWithHint "HK" (PartyIdHint "HK")
+    adaniId <- validateUserId "adani"
+    airtelId <- validateUserId "airtel"
+    --hkId <- validateUserId "hk"
+    createUser (User adaniId (Some adani)) [CanActAs adani]
+    createUser (User airtelId (Some airtel)) [CanActAs airtel]
+    --createUser (User hkId (Some hk)) [CanActAs hk]
 
---     --create a warrenty
---     manufacturerProposal <- submit adani do
---         createCmd Create with
---             manufacturer = adani
---             retailer = airtel
---             product = "Iphone"
---             productId = "No1"
---             warrantyPeriod = "5 Years"
+    --create a warrenty
+    manufacturerProposal <- submit adani do
+        createCmd Create with
+            manufacturer = adani
+            retailer = airtel
+            product = "Iphone"
+            productId = "No1"
+            warrantyPeriod = "5 Years"
+            customer = "nil"
+            purchaseDate = "nil"
 
---     --assign warrenty to the customer
---     retailerTransfer <- submit airtel do
---         exerciseCmd manufacturerProposal Transfer
---             with
---                 customer = hk
---                 purchaseDate = "5-11-2022"
+    retailerProposal <- submit airtel do
+        exerciseCmd manufacturerProposal SellItemTo
+            with    
+                rightFulOwner = "hk"
+                dateOfPurchase = "11-02-2022"
+
+    submit airtel do
+        exerciseCmd retailerProposal Transfer
+
                 
     
