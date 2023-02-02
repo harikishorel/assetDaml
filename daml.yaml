@@ -4,10 +4,7 @@
 sdk-version: 2.5.0
 name: asset3
 source: daml
-#init-script: Main:setup
-parties:
-  - Adani
-  - Airtel
+init-script: Main:setup
 version: 0.0.1
 dependencies:
   - daml-prim
