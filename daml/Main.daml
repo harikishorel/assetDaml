@@ -46,6 +46,7 @@ template Create
                 retailerName = retailer
                 customerName = customer
                 buyDate = purchaseDate
+                warrantyEnds = warrantyPeriod
 
 
 template View
@@ -54,6 +55,7 @@ template View
         retailerName : Party
         customerName : Text
         buyDate : Text
+        warrantyEnds : Text
     
     where 
         signatory retailerName, manufacturerName
